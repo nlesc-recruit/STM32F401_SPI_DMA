@@ -1,0 +1,16 @@
+name: Linting
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  linting:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: clang-format
+      run: clang-format --style=file *.{cpp,h}
