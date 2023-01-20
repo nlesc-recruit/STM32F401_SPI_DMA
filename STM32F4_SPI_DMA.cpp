@@ -9,20 +9,20 @@ void SPIDMAClass::begin(uint8_t _pin) {
 
   // Setup DMA
   // first find out which SPI is used and set the DMA-related values accordingly
-  SPI_TypeDef* _spi = getHandle()->Instance;
-  if (_spi == SPI1) {
+  SPI_TypeDef* _hwspi = getHandle()->Instance;
+  if (_hwspi == SPI1) {
     _dma = DMA2;
     _txstream = LL_DMA_STREAM_3;
     _txchannel = LL_DMA_CHANNEL_3;
     LL_DMATX_IsActiveFlag_TC = LL_DMA_IsActiveFlag_TC3;
     LL_DMATX_ClearFlag_TC = LL_DMA_ClearFlag_TC3;
-  } else if (_spi == SPI2) {
+  } else if (_hwspi == SPI2) {
     _dma = DMA1;
     _txstream = LL_DMA_STREAM_4;
     _txchannel = LL_DMA_CHANNEL_0;
     LL_DMATX_IsActiveFlag_TC = LL_DMA_IsActiveFlag_TC4;
     LL_DMATX_ClearFlag_TC = LL_DMA_ClearFlag_TC4;
-  } else if (_spi == SPI3) {
+  } else if (_hwspi == SPI3) {
     _dma = DMA1;
     _txstream = LL_DMA_STREAM_5;
     _txchannel = LL_DMA_CHANNEL_0;
@@ -54,13 +54,13 @@ void SPIDMAClass::begin(uint8_t _pin) {
   LL_DMA_InitTypeDef DMATXConfig;
   LL_DMA_StructInit(&DMATXConfig);
 
-  DMATXConfig.PeriphOrM2MSrcAddress =  LL_SPI_DMA_GetRegAddr(_spi);
+  DMATXConfig.PeriphOrM2MSrcAddress =  LL_SPI_DMA_GetRegAddr(_hwspi);
   DMATXConfig.Direction = LL_DMA_DIRECTION_MEMORY_TO_PERIPH;
   DMATXConfig.Mode = LL_DMA_MODE_NORMAL;
   DMATXConfig.PeriphOrM2MSrcIncMode = LL_DMA_PERIPH_NOINCREMENT;
   DMATXConfig.MemoryOrM2MDstIncMode = LL_DMA_MEMORY_INCREMENT;
-  DMATXConfig.PeriphOrM2MSrcDataSize = LL_SPI_GetDataWidth(_spi) == LL_SPI_DATAWIDTH_8BIT ? LL_DMA_PDATAALIGN_BYTE : LL_DMA_PDATAALIGN_HALFWORD;
-  DMATXConfig.MemoryOrM2MDstDataSize = LL_SPI_GetDataWidth(_spi) == LL_SPI_DATAWIDTH_8BIT ? LL_DMA_PDATAALIGN_BYTE : LL_DMA_PDATAALIGN_HALFWORD;
+  DMATXConfig.PeriphOrM2MSrcDataSize = LL_SPI_GetDataWidth(_hwspi) == LL_SPI_DATAWIDTH_8BIT ? LL_DMA_PDATAALIGN_BYTE : LL_DMA_PDATAALIGN_HALFWORD;
+  DMATXConfig.MemoryOrM2MDstDataSize = LL_SPI_GetDataWidth(_hwspi) == LL_SPI_DATAWIDTH_8BIT ? LL_DMA_PDATAALIGN_BYTE : LL_DMA_PDATAALIGN_HALFWORD;
   DMATXConfig.Channel = _txchannel;
 
   LL_DMA_Init(_dma, _txstream, &DMATXConfig);
@@ -89,12 +89,14 @@ uint16_t SPIDMAClass::DMAtransfer16(uint8_t pin, uint16_t _data, SPITransferMode
 }
 
 void SPIDMAClass::DMAtransfer(uint8_t pin, void *_buf, size_t _count, SPITransferMode _mode) {
+  SPI_TypeDef* _hwspi = getHandle()->Instance;
+
   LL_DMA_DisableStream(_dma, _txstream);
   while (LL_DMA_IsEnabledStream(_dma, _txstream));
   LL_DMA_SetMemoryAddress(_dma, _txstream, (uint32_t) _buf);
   LL_DMA_SetDataLength(_dma, _txstream, _count);
 
-  LL_SPI_EnableDMAReq_TX(getHandle()->Instance);
+  LL_SPI_EnableDMAReq_TX(_hwspi);
 
   if (pin != CS_PIN_CONTROLLED_BY_USER) {
     digitalWrite(pin, LOW);
@@ -103,7 +105,7 @@ void SPIDMAClass::DMAtransfer(uint8_t pin, void *_buf, size_t _count, SPITransfe
   LL_DMA_EnableStream(_dma, _txstream);
   while(!LL_DMATX_IsActiveFlag_TC(_dma));
   LL_DMATX_ClearFlag_TC(_dma);
-  while (LL_SPI_IsActiveFlag_BSY(_spi));
+  while (LL_SPI_IsActiveFlag_BSY(_hwspi));
 
   if (pin != CS_PIN_CONTROLLED_BY_USER && _mode == SPI_LAST) {
     digitalWrite(pin, HIGH);
@@ -111,7 +113,7 @@ void SPIDMAClass::DMAtransfer(uint8_t pin, void *_buf, size_t _count, SPITransfe
 
   LL_DMA_DisableStream(_dma, _txstream);
   while (LL_DMA_IsEnabledStream(_dma, _txstream));
-  LL_SPI_DisableDMAReq_TX(getHandle()->Instance);
+  LL_SPI_DisableDMAReq_TX(_hwspi);
 }
 
 void SPIDMAClass::DMAtransfer(byte pin, void *_bufout, void *_bufin, size_t _count, SPITransferMode _mode) {

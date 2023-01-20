@@ -3,9 +3,9 @@
  * Additional DMA transfer functions are added. After each transfer DMA is disabled, such
  * that the normal transfer functions still work as well
  */
-#pragma once
+#ifndef STM32F4_SPI_DMA_H
+#define STM32F4_SPI_DMA_H
 
-#define USE_FULL_LL_DRIVER
 #include <SPI.h>
 
 
@@ -42,3 +42,4 @@ class SPIDMAClass: public SPIClass {
     uint32_t (*LL_DMATX_IsActiveFlag_TC) (DMA_TypeDef* DMAx);
     void (*LL_DMATX_ClearFlag_TC) (DMA_TypeDef* DMAx);
 };
+#endif  // STM32F4_SPI_DMA_H
