@@ -114,7 +114,7 @@ void SPIDMAClass::DMAtransfer(uint8_t pin, void *_buf, size_t _count, SPITransfe
   LL_SPI_DisableDMAReq_TX(getHandle()->Instance);
 }
 
-void SPIDMAClass::DMAtransfer(byte _pin, void *_bufout, void *_bufin, size_t _count, SPITransferMode _mode) {
+void SPIDMAClass::DMAtransfer(byte pin, void *_bufout, void *_bufin, size_t _count, SPITransferMode _mode) {
   // We do not yet support receiving data, ignore _bufin for now
-  DMAtransfer(_pin, _bufout, _count, _mode);
+  DMAtransfer(pin, _bufout, _count, _mode);
 }
